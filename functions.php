@@ -1,8 +1,33 @@
 <?php
 require('connection.php');
+session_start();
+
+function h($s) {
+  return htmlspecialchars($s, ENT_QUOTES, "UTF-8");
+}
+
+function setToken() {
+  $token =sha1(uniqid(mt_rand(),true));
+  $_SESSION['token'] = $token;
+}
+
+function checkToken($data) {
+  if (empty($_SESSION['token']) || ($_SESSION['token'] != $data)){
+    $_SESSION['err'] = '不正な操作です';
+    header('location: '.$_SERVER['HTTP_REFERER'].'');
+    exit();
+  }
+  return true;
+}
+
+function unsetSession() {
+  if(!empty($_SESSION['err'])) $_SESSION['err'] = '';
+}
 
 function create($data) {
-  insertDb($data['todo']);
+  if(checkToken($data['token'])){
+    insertDb($data['todo']);
+  }
 }
 
 function index() {
@@ -10,7 +35,9 @@ function index() {
 }
 
 function update($data) {
-  updateDb($data['id'], $data['todo']);
+  if(checkToken($data['token'])){
+    updateDb($data['id'], $data['todo']);
+  }
 }
 
 function detail($id) {
@@ -24,9 +51,12 @@ function checkReferer() {
 
 function transition($path) {
   $data = $_POST;
+  if(isset($data['todo'])) $res = validate($data['todo']);
   if($path === '/index.php' && $data['type'] === 'delete'){
     deleteData($data['id']);
     return 'index';
+  }elseif(!$res || !empty($_SESSION['err'])){
+    return 'back';
   }elseif($path === '/new.php'){
     create($data);
   }elseif($path === '/edit.php'){
@@ -36,5 +66,9 @@ function transition($path) {
 
 function deleteData($id) {
   deleteDb($id);
+}
+
+function validate($data){
+  return $res = $data != "" ? true : $_SESSION['err'] = '入力がありません';
 }
 ?>
