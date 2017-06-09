@@ -38,11 +38,15 @@ function updateDb($id, $data) {
 }
 
 function getSelectData($id) {
+  // var_dump($id);
+  // exit();
   $dbh = connectPdo();
-  $sql = 'SELECT todo FROM todos WHERE id = :id AND deleted_as IS NULL';
+  $sql = 'SELECT todo FROM todos WHERE id = :id AND deleted_at IS NULL';
   $stmt = $dbh->prepare($sql);
   $stmt->execute(array(':id' => (int)$id));
   $data = $stmt->fetch();
+  // var_dump($data);
+  // exit();
   return $data['todo'];
 }
 
